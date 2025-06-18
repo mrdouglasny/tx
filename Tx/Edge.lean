@@ -117,7 +117,7 @@ average_degree
 Obviously this is always a rational number. I've made it a real for now,
 but we can change it back to a rational in ℚ if needed.
 -/
-noncomputable def average_degree (G : SimpleGraph V) : ℝ :=
+noncomputable def average_degree (G : SimpleGraph V) : ℚ :=
   let total_degree := ∑ v, (G.degree v)
   total_degree / Fintype.card V
 
