@@ -6,6 +6,12 @@ import Mathlib.Data.Sym.Sym2
 import Mathlib.Data.ENat.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Set.Card
+import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
+import Mathlib.LinearAlgebra.Eigenspace.Basic
+import Mathlib.Data.Real.Basic
+import Mathlib.Data.Matrix.Basic
+import Mathlib.Combinatorics.SimpleGraph.Matching
+import Mathlib.Combinatorics.SimpleGraph.Path
 
 /-!
 Lean 4 counterpart of a subset of the invariants provided by the
@@ -71,6 +77,37 @@ noncomputable def clique_number (G : SimpleGraph V) : ℕ :=
 noncomputable def independence_number (G : SimpleGraph V) : ℕ :=
   G.indepNum
 
+/--
+Take advantage of Mathlib's SimpleGraph.Subgraph.IsMatching function
+-/
+noncomputable def matching_number (G : SimpleGraph V) :=
+  let S : Set ℕ :=
+    {n | ∃ C : G.Subgraph, (C.IsMatching) ∧ n = C.verts.ncard}
+  sInf S
+
+/--
+vertex cover: for each edge (u, v), either u or v is inside the vertex cover
+AFAICT, mathlib does not have a built in 'isvertexcover' function.
+-/
+def IsVertexCover (G : SimpleGraph V) (C : Set V) : Prop :=
+  ∀ e ∈ G.edgeSet, ∃ v ∈ e, v ∈ C
+
+-- Set has an ncard method which returns ℕ, as opposed to Set.encard
+-- which returns ℕ∞
+noncomputable def vertex_cover_number (G : SimpleGraph V) : ℕ := by
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsVertexCover G C) ∧ n = C.ncard}
+  exact sInf S
+
+/--
+Checks if the complement of a set S in the graph G induces a connected subgraph.
+
+The complement of S is defined as the set of all nodes in G that are not in S.
+This function verifies whether the subgraph induced by the complement of S is connected.
+-/
+noncomputable def complement_is_connected (G : SimpleGraph V) (S : G.Subgraph): Prop :=
+  Sᶜ.Connected
+
 noncomputable def degree (G : SimpleGraph V) (v : V) :=
   G.degree v
 
@@ -97,6 +134,17 @@ I haven't implemented the 'optional sorting' part yet; how important is that?
 noncomputable def degree_sequence (G : SimpleGraph V) : List ℕ :=
 -- (Finset.univ : Finset V).val.map (λ v => G.degree v) will return a MultiSet instead
    (Finset.univ : Finset V).toList.map (λ v => G.degree v)
+
+/--
+It looks like we must include the type of the entries in the matrix.
+Although an adjacency matrix is 0/1, I think having them as reals
+may make eigenvalue definitions easier later.
+-/
+noncomputable def adjacency_matrix (G: SimpleGraph V) :=
+  G.adjMatrix ℝ
+
+noncomputable def adjacency_eigenvalues (G : SimpleGraph V) : Set ℝ :=
+  spectrum ℝ (adjacency_matrix G)
 
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
 * every edge in `C` is indeed an edge of `G`, *and*
