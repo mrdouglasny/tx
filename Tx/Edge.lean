@@ -150,7 +150,7 @@ failed to synthesize
 
 Thus I manually do the cast.
 -/
-noncomputable def adjacency_matrix (G: SimpleGraph V) :=
+noncomputable def adjacency_matrix (G: SimpleGraph V) : Matrix V V ℕ :=
   G.adjMatrix ℕ
 
 -- I realized if this returns a Set, there is no multiplicity.
@@ -169,7 +169,7 @@ noncomputable def spectral_radius (G : SimpleGraph V) :=
 Because G.degree returns a ℕ, it doesn't suffice to assume
 the matrix entries are of type α with [Neg α] [Zero α] [One α]
 -/
-noncomputable def laplacian_matrix (G : SimpleGraph V): Matrix V V ℝ :=
+noncomputable def laplacian_matrix (G : SimpleGraph V): Matrix V V ℤ :=
   Matrix.of fun u v =>
     if u == v then
         G.degree u
@@ -179,7 +179,8 @@ noncomputable def laplacian_matrix (G : SimpleGraph V): Matrix V V ℝ :=
         0
 
 def laplacian_eigenvalues (G : SimpleGraph V) : Set ℝ :=
-  spectrum ℝ (laplacian_matrix G)
+  let real_lap_matrix : Matrix V V ℝ := (laplacian_matrix G).map (↑)
+  spectrum ℝ real_lap_matrix
 
 noncomputable def largest_laplacian_eigenvalue (G : SimpleGraph V) :=
   sSup (laplacian_eigenvalues G)
