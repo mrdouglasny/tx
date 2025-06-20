@@ -8,10 +8,10 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Set.Card
 import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 import Mathlib.LinearAlgebra.Eigenspace.Basic
-import Mathlib.Data.Real.Basic
 import Mathlib.Data.Matrix.Basic
 import Mathlib.Combinatorics.SimpleGraph.Matching
 import Mathlib.Combinatorics.SimpleGraph.Path
+import Mathlib.Data.Real.Archimedean -- needed for sInf and sSup (set infimum/supremum) on the reals
 
 /-!
 Lean 4 counterpart of a subset of the invariants provided by the
@@ -136,15 +136,53 @@ noncomputable def degree_sequence (G : SimpleGraph V) : List ℕ :=
    (Finset.univ : Finset V).toList.map (λ v => G.degree v)
 
 /--
-It looks like we must include the type of the entries in the matrix.
-Although an adjacency matrix is 0/1, I think having them as reals
-may make eigenvalue definitions easier later.
+If you use this code instead
+```
+noncomputable def adjacency_matrix (G: SimpleGraph V) :=
+  G.adjMatrix ℕ
+noncomputable def adjacency_eigenvalues (G : SimpleGraph V) : Set ℝ :=
+  spectrum ℝ (adjacency_eigenvalues G))
+```
+there is this type error:
+
+failed to synthesize
+  Algebra ℝ (Matrix V V ℚ)
+
+Thus I manually do the cast.
 -/
 noncomputable def adjacency_matrix (G: SimpleGraph V) :=
-  G.adjMatrix ℝ
+  G.adjMatrix ℕ
 
+-- I realized if this returns a Set, there is no multiplicity.
+-- This will make counting zero eigenvalues difficult.
 noncomputable def adjacency_eigenvalues (G : SimpleGraph V) : Set ℝ :=
-  spectrum ℝ (adjacency_matrix G)
+  let real_adj_matrix : Matrix V V ℝ := (adjacency_matrix G).map (↑)
+  spectrum ℝ real_adj_matrix
+
+noncomputable def smallest_adjacency_eigenvalue (G : SimpleGraph V) :=
+  sInf (adjacency_eigenvalues G)
+
+noncomputable def spectral_radius (G : SimpleGraph V) :=
+  sSup ((adjacency_eigenvalues G).image abs)
+
+/--
+Because G.degree returns a ℕ, it doesn't suffice to assume
+the matrix entries are of type α with [Neg α] [Zero α] [One α]
+-/
+noncomputable def laplacian_matrix (G : SimpleGraph V): Matrix V V ℝ :=
+  Matrix.of fun u v =>
+    if u == v then
+        G.degree u
+    else if G.Adj u v then
+        -1
+    else
+        0
+
+def laplacian_eigenvalues (G : SimpleGraph V) : Set ℝ :=
+  spectrum ℝ (laplacian_matrix G)
+
+noncomputable def largest_laplacian_eigenvalue (G : SimpleGraph V) :=
+  sSup (laplacian_eigenvalues G)
 
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
 * every edge in `C` is indeed an edge of `G`, *and*
