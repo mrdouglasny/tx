@@ -12,6 +12,8 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.Combinatorics.SimpleGraph.Matching
 import Mathlib.Combinatorics.SimpleGraph.Path
 import Mathlib.Data.Real.Archimedean -- needed for sInf and sSup (set infimum/supremum) on the reals
+import Mathlib.LinearAlgebra.Matrix.Hermitian
+import Mathlib.LinearAlgebra.Matrix.Spectrum
 
 /-!
 Lean 4 counterpart of a subset of the invariants provided by the
@@ -51,7 +53,8 @@ open scoped Classical
 universe u
 
 -- For now, we will only work over finite graphs.
-variable {V : Type u} [Fintype V]
+-- DecidableEq V needed for eigenvalues
+variable {V : Type u} [Fintype V] [DecidableEq V]
 
 /-- The **chromatic number** of a graph `G`.
 
@@ -136,6 +139,17 @@ noncomputable def degree_sequence (G : SimpleGraph V) : List ℕ :=
    (Finset.univ : Finset V).toList.map (λ v => G.degree v)
 
 /--
+Finset.max returns WithBot ℕ (just the naturals with a ⊥ element) to
+account for empty lists. However, I think the graph on no vertices
+will have an empty degree list.
+-/
+noncomputable def maximum_degree (G : SimpleGraph V) : WithBot ℕ :=
+   ((Finset.univ : Finset V).image (λ v => G.degree v)).max
+
+noncomputable def minimum_degree (G : SimpleGraph V) : WithBot ℕ :=
+   ((Finset.univ : Finset V).image (λ v => G.degree v)).min
+
+/--
 If you use this code instead
 ```
 noncomputable def adjacency_matrix (G: SimpleGraph V) :=
@@ -165,6 +179,17 @@ noncomputable def smallest_adjacency_eigenvalue (G : SimpleGraph V) :=
 noncomputable def spectral_radius (G : SimpleGraph V) :=
   sSup ((adjacency_eigenvalues G).image abs)
 
+-- Method 2: number of zero eigenvalues = dimension kernel = n - dim image
+noncomputable def adjacency_eigenvalues2 (G: SimpleGraph V) :=
+    Module.rank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
+
+-- Method 3: eigenvalues returns an indexable object
+noncomputable def adjacency_eigenvalues3 [DecidableEq V] (G : SimpleGraph V) := by
+  let real_adj_matrix : Matrix V V ℝ := (adjacency_matrix G).map (↑)
+  have hA : Matrix.IsHermitian real_adj_matrix := by
+    sorry
+  exact hA.eigenvalues
+
 /--
 Because G.degree returns a ℕ, it doesn't suffice to assume
 the matrix entries are of type α with [Neg α] [Zero α] [One α]
@@ -184,6 +209,29 @@ def laplacian_eigenvalues (G : SimpleGraph V) : Set ℝ :=
 
 noncomputable def largest_laplacian_eigenvalue (G : SimpleGraph V) :=
   sSup (laplacian_eigenvalues G)
+
+-- dominating set: each vertex is either in the dominating set or adjacent
+-- to a vertex in the set
+def IsDominatingSet (G : SimpleGraph V) (C : Set V) : Prop :=
+  ∀ v : V, v ∈ C ∨ (∃ w ∈ C, G.Adj v w)
+
+noncomputable def domination_number (G : SimpleGraph V) : ℕ := by
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsDominatingSet G C) ∧ n = C.ncard}
+  exact sInf S
+
+noncomputable def independent_domination_number (G : SimpleGraph V) : ℕ := by
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsIndepSet G C) ∧ (IsDominatingSet G C) ∧ n = C.ncard}
+  exact sInf S
+
+def IsTotalDominatingSet (G : SimpleGraph V) (C : Set V) : Prop :=
+  ∀ v : V, ∃ w ∈ C, G.Adj v w
+
+noncomputable def total_domination_number (G : SimpleGraph V) : ℕ := by
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsTotalDominatingSet G C) ∧ n = C.ncard}
+  exact sInf S
 
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
 * every edge in `C` is indeed an edge of `G`, *and*
