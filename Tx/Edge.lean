@@ -233,6 +233,27 @@ noncomputable def total_domination_number (G : SimpleGraph V) : ℕ := by
     {n | ∃ C : Set V, (IsTotalDominatingSet G C) ∧ n = C.ncard}
   exact sInf S
 
+-- Create the subgraph on these vertices
+def subgraph_from_set (G : SimpleGraph V) (C : Set V) : G.Subgraph :=
+  {
+    verts := C
+    Adj := λ v w ↦ G.Adj v w ∧ v ∈ C ∧ w ∈ C
+    adj_sub := λ hadj ↦ hadj.1
+    edge_vert := λ hadj ↦ hadj.2.1
+    symm := by
+      rintro v w ⟨hvw, hv, hw⟩
+      exact ⟨G.symm hvw, hw, hv⟩
+  }
+
+def IsOuterConnectedDominatingSet (G : SimpleGraph V) (C : Set V) : Prop :=
+  have subgraphC := subgraph_from_set G C
+  (IsDominatingSet G C) ∧ (complement_is_connected G subgraphC)
+
+noncomputable def outer_connected_domination_number (G : SimpleGraph V) : ℕ := by
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsOuterConnectedDominatingSet G C) ∧ n = C.ncard}
+  exact sInf S
+
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
 * every edge in `C` is indeed an edge of `G`, *and*
 * for every vertex `v`, some edge of `C` is incident to `v`.
