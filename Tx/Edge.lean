@@ -81,12 +81,16 @@ noncomputable def independence_number (G : SimpleGraph V) : ℕ :=
   G.indepNum
 
 /--
-Take advantage of Mathlib's SimpleGraph.Subgraph.IsMatching function
+Take advantage of Mathlib's SimpleGraph.Subgraph.IsMatching function.
+
+Maximum Matchings:
+The size of a maximum matching is the number of edges.
+The matching number is the size of the largest maximum matching.
 -/
 noncomputable def matching_number (G : SimpleGraph V) :=
   let S : Set ℕ :=
-    {n | ∃ C : G.Subgraph, (C.IsMatching) ∧ n = C.verts.ncard}
-  sInf S
+    {n | ∃ C : G.Subgraph, (C.IsMatching) ∧ n = C.edgeSet.ncard}
+  sSup S
 
 /--
 vertex cover: for each edge (u, v), either u or v is inside the vertex cover
