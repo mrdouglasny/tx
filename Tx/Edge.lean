@@ -93,6 +93,18 @@ noncomputable def matching_number (G : SimpleGraph V) :=
   sSup S
 
 /--
+Maximal Matchings
+-/
+def IsMaximalMatching (G : SimpleGraph V) (C : G.Subgraph) :=
+  C.IsMatching ∧ (¬ ∃ D : G.Subgraph, (D.IsMatching) ∧ C ≤ D)
+
+noncomputable def min_maximal_matching_number (G : SimpleGraph V) :=
+  let S : Set ℕ :=
+    {n | ∃ C : G.Subgraph, (IsMaximalMatching G C) ∧ n = C.edgeSet.ncard}
+  sInf S
+
+
+/--
 vertex cover: for each edge (u, v), either u or v is inside the vertex cover
 AFAICT, mathlib does not have a built in 'isvertexcover' function.
 -/
