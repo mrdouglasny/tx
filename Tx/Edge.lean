@@ -270,6 +270,43 @@ noncomputable def outer_connected_domination_number (G : SimpleGraph V) : ℕ :=
     {n | ∃ C : Set V, (IsOuterConnectedDominatingSet G C) ∧ n = C.ncard}
   exact sInf S
 
+def IsKForcingSet (k : ℕ) (G : SimpleGraph V) (C : Set V) : Prop :=
+  sorry
+
+/--
+'A zero forcing set is a special case of a k-forcing set where k = 1.'
+-/
+def IsZeroForcingSet : SimpleGraph V → Set V → Prop :=
+  IsKForcingSet 1
+
+noncomputable def k_forcing_number (k : ℕ) (G : SimpleGraph V) : ℕ :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsKForcingSet k G C) ∧ n = C.ncard}
+  sInf S
+
+noncomputable def zero_forcing_number (G : SimpleGraph V) : ℕ :=
+  k_forcing_number 1 G
+
+noncomputable def two_forcing_number (G : SimpleGraph V) : ℕ :=
+  k_forcing_number 2 G
+
+noncomputable def connected_zero_forcing_number (G : SimpleGraph V) : ℕ :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsZeroForcingSet G C)
+      ∧ (subgraph_from_set G C).Connected
+      ∧ n = C.ncard}
+  sInf S
+
+/--
+Alternatively, we could build the set from subgraphs
+-/
+noncomputable def connected_zero_forcing_number2 (G : SimpleGraph V) : ℕ :=
+  let S : Set ℕ :=
+    {n | ∃ C : G.Subgraph, (IsZeroForcingSet G C.verts)
+      ∧ C.Connected
+      ∧ n = C.verts.ncard}
+  sInf S
+
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
 * every edge in `C` is indeed an edge of `G`, *and*
 * for every vertex `v`, some edge of `C` is incident to `v`.
