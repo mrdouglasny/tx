@@ -1,3 +1,2 @@
--- This module serves as the root of the `Tx` library.
--- Import modules here that should be built as part of the library.
-import «Tx».Basic
+import Tx.Edge
+import Tx.Tests

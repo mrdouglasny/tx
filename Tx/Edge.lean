@@ -1,17 +1,18 @@
-import Mathlib.Combinatorics.SimpleGraph.Coloring
-import Mathlib.Combinatorics.SimpleGraph.Clique
-import Mathlib.Combinatorics.SimpleGraph.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Sym.Sym2
 import Mathlib.Data.ENat.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Set.Card
-import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
-import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Data.Matrix.Basic
-import Mathlib.Combinatorics.SimpleGraph.Matching
-import Mathlib.Combinatorics.SimpleGraph.Path
 import Mathlib.Data.Real.Archimedean -- needed for sInf and sSup (set infimum/supremum) on the reals
+import Mathlib.Combinatorics.SimpleGraph.Coloring
+import Mathlib.Combinatorics.SimpleGraph.Clique
+import Mathlib.Combinatorics.SimpleGraph.Basic
+import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
+import Mathlib.Combinatorics.SimpleGraph.Matching
+import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
+import Mathlib.Combinatorics.SimpleGraph.Paths
+import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.Matrix.Hermitian
 import Mathlib.LinearAlgebra.Matrix.Spectrum
 
@@ -49,6 +50,7 @@ Currently covered
 
 open SimpleGraph
 open scoped Classical
+open FiniteDimensional
 
 universe u
 
@@ -179,15 +181,21 @@ failed to synthesize
   Algebra ℝ (Matrix V V ℚ)
 
 Thus I manually do the cast.
+
+MRD: I think it's OK to use adjMatrix ℝ rather than casting adjacency_matrix.
 -/
+
 noncomputable def adjacency_matrix (G: SimpleGraph V) : Matrix V V ℕ :=
   G.adjMatrix ℕ
 
 -- I realized if this returns a Set, there is no multiplicity.
 -- This will make counting zero eigenvalues difficult.
-noncomputable def adjacency_eigenvalues (G : SimpleGraph V) : Set ℝ :=
+noncomputable def adjacency_eigenvalues2 (G : SimpleGraph V) : Set ℝ :=
   let real_adj_matrix : Matrix V V ℝ := (adjacency_matrix G).map (↑)
   spectrum ℝ real_adj_matrix
+
+noncomputable def adjacency_eigenvalues (G : SimpleGraph V) :=
+  spectrum ℝ (G.adjMatrix ℝ)
 
 noncomputable def smallest_adjacency_eigenvalue (G : SimpleGraph V) :=
   sInf (adjacency_eigenvalues G)
@@ -196,15 +204,19 @@ noncomputable def spectral_radius (G : SimpleGraph V) :=
   sSup ((adjacency_eigenvalues G).image abs)
 
 -- Method 2: number of zero eigenvalues = dimension kernel = n - dim image
-noncomputable def adjacency_eigenvalues2 (G: SimpleGraph V) :=
+noncomputable def zero_adjacency_eigenvalues_count' (G: SimpleGraph V) :=
     Module.rank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
 
 -- Method 3: eigenvalues returns an indexable object
-noncomputable def adjacency_eigenvalues3 [DecidableEq V] (G : SimpleGraph V) := by
-  let real_adj_matrix : Matrix V V ℝ := (adjacency_matrix G).map (↑)
+noncomputable def adjacency_eigenvalues' [DecidableEq V] (G : SimpleGraph V) := by
+  let real_adj_matrix : Matrix V V ℝ := (G.adjMatrix ℝ) -- (adjacency_matrix G).map (↑)
+  have hS : Matrix.IsSymm real_adj_matrix := G.isSymm_adjMatrix
   have hA : Matrix.IsHermitian real_adj_matrix := by
-    sorry
+    simpa [Matrix.conjTranspose,hS]
   exact hA.eigenvalues
+
+noncomputable def zero_adjacency_eigenvalues_count (G : SimpleGraph V) :=
+  Module.finrank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
 
 /--
 Because G.degree returns a ℕ, it doesn't suffice to assume
@@ -270,8 +282,37 @@ noncomputable def outer_connected_domination_number (G : SimpleGraph V) : ℕ :=
     {n | ∃ C : Set V, (IsOuterConnectedDominatingSet G C) ∧ n = C.ncard}
   exact sInf S
 
+/-- `atMost k T` says the (finite) set `T` has ≤ `k` elements. -/
+def atMost (k : ℕ) (T : Set V) : Prop :=
+  ∃ hT : T.Finite, hT.toFinset.card ≤ k
+
+/-- One simultaneous “wave’’ of the *k-forcing* rule. -/
+def kForcingStep (k : ℕ) (G : SimpleGraph V) (S : Set V) : Set V :=
+  S ∪
+    { v | ∃ b,                                    -- a blue vertex `b`
+        b ∈ S ∧                                  --   already coloured
+        atMost k { w | G.Adj b w ∧ w ∉ S } ∧     -- its white neighbourhood is ≤ k
+        G.Adj b v ∧ v ∉ S }                      -- and `v` is one of those neighbours
+
+/-!
+### Reflexive-transitive closure of the rule
+`kForces k G S T` means that starting from coloured set `S`
+we can reach *at most* coloured set `T` in finitely many rounds.
+-/
+inductive kForces (k : ℕ) (G : SimpleGraph V) :
+    Set V → Set V → Prop
+| refl  {S} : kForces k G S S
+| step  {S T} (hST : kForces k G S T) :
+    kForces k G S (kForcingStep k G T)
+
+notation S " ⟹[" k ", " G "] " T => kForces k G S T
+
+/-!
+`IsKForcingSet k G C` holds when every vertex becomes blue
+after finitely many rounds that start from the initial coloured set `C`.
+-/
 def IsKForcingSet (k : ℕ) (G : SimpleGraph V) (C : Set V) : Prop :=
-  sorry
+  ∃ T, (C ⟹[k, G] T) ∧ T = ⊤      -- `⊤ : Set V` is the universe `Set.univ`
 
 /--
 'A zero forcing set is a special case of a k-forcing set where k = 1.'
