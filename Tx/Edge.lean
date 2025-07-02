@@ -297,6 +297,8 @@ noncomputable def outer_connected_domination_number (G : SimpleGraph V) : ℕ :=
     {n | ∃ C : Set V, (IsOuterConnectedDominatingSet G C) ∧ n = C.ncard}
   exact sInf S
 
+-- K FORCING RELATED INVARIANTS
+
 /-- `atMost k T` says the (finite) set `T` has ≤ `k` elements. -/
 def atMost (k : ℕ) (T : Set V) : Prop :=
   ∃ hT : T.Finite, hT.toFinset.card ≤ k
@@ -354,13 +356,24 @@ noncomputable def connected_zero_forcing_number (G : SimpleGraph V) : ℕ :=
   sInf S
 
 /--
-Alternatively, we could build the set from subgraphs
+Alternatively, we could build the set from subgraphs.
+Upon further reflecting I think this subgrpah version actually fails.
 -/
 noncomputable def connected_zero_forcing_number2 (G : SimpleGraph V) : ℕ :=
   let S : Set ℕ :=
     {n | ∃ C : G.Subgraph, (IsZeroForcingSet G C.verts)
       ∧ C.Connected
       ∧ n = C.verts.ncard}
+  sInf S
+
+def subgraph_has_isolated_vertex {G : SimpleGraph V} (S : G.Subgraph) : Prop :=
+  ∃ v, S.neighborSet v = ∅
+
+noncomputable def total_zero_forcing_number (G : SimpleGraph V) (C : Set V) :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsZeroForcingSet G C)
+      ∧ (¬ subgraph_has_isolated_vertex (subgraph_from_set G C))
+      ∧ n = C.ncard}
   sInf S
 
 /-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
