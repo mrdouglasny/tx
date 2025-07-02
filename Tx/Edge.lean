@@ -15,6 +15,9 @@ import Mathlib.Combinatorics.SimpleGraph.Paths
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.Matrix.Hermitian
 import Mathlib.LinearAlgebra.Matrix.Spectrum
+import Mathlib.Data.List.Basic
+import Mathlib.Order.OrderIsoNat
+import Mathlib.Order.Basic
 
 /-!
 Lean 4 counterpart of a subset of the invariants provided by the
@@ -208,7 +211,7 @@ noncomputable def zero_adjacency_eigenvalues_count' (G: SimpleGraph V) :=
     Module.rank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
 
 -- Method 3: eigenvalues returns an indexable object
-noncomputable def adjacency_eigenvalues' [DecidableEq V] (G : SimpleGraph V) := by
+noncomputable def adjacency_eigenvalues' (G : SimpleGraph V) := by
   let real_adj_matrix : Matrix V V ℝ := (G.adjMatrix ℝ) -- (adjacency_matrix G).map (↑)
   have hS : Matrix.IsSymm real_adj_matrix := G.isSymm_adjMatrix
   have hA : Matrix.IsHermitian real_adj_matrix := by
@@ -217,6 +220,18 @@ noncomputable def adjacency_eigenvalues' [DecidableEq V] (G : SimpleGraph V) := 
 
 noncomputable def zero_adjacency_eigenvalues_count (G : SimpleGraph V) :=
   Module.finrank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
+
+noncomputable def algebraic_connectivity (G : SimpleGraph V) : Option ℝ :=
+  let eigval_func := adjacency_eigenvalues' G
+  let image := Finset.image eigval_func Finset.univ
+  let sorted := image.sort (· ≤ ·)
+  sorted[1]?
+
+noncomputable def second_largest_adjacency_eigenvalue (G : SimpleGraph V) : Option ℝ :=
+  let eigval_func := adjacency_eigenvalues' G
+  let image := Finset.image eigval_func Finset.univ
+  let sorted := image.sort (· ≥ ·)
+  sorted[1]?
 
 /--
 Because G.degree returns a ℕ, it doesn't suffice to assume
