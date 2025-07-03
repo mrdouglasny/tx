@@ -403,3 +403,19 @@ noncomputable def edge_cover_number (G : SimpleGraph V) [Fintype V] : ℕ∞ := 
         (∀ v : V, ∃ e, e ∈ C ∧ v ∈ e) ∧                    -- cover condition
         n = (C.card : ℕ∞)}                                -- tie size to `n`
   exact sInf S
+
+noncomputable def sub_k_domination_number (G : SimpleGraph V) (k : ℕ) :=
+  have degree_list := degree_sequence G
+  have n := Fintype.card V
+  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
+  -- one way to express \sum_{i = 0}^{t}
+  let all_possible_t := {t | (t + (1 / k) * ∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
+  sInf all_possible_t
+
+noncomputable def sub_total_domination_number (G : SimpleGraph V) :=
+  have degree_list := degree_sequence G
+  have n := Fintype.card V
+  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
+  -- one way to express \sum_{i = 0}^{t}
+  let all_possible_t := {t | (∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
+  sInf all_possible_t
