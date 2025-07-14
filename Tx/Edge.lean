@@ -18,6 +18,7 @@ import Mathlib.LinearAlgebra.Matrix.Spectrum
 import Mathlib.Data.List.Basic
 import Mathlib.Order.OrderIsoNat
 import Mathlib.Order.Basic
+import Mathlib.Algebra.Order.Floor.Div
 
 /-!
 Lean 4 counterpart of a subset of the invariants provided by the
@@ -369,10 +370,35 @@ noncomputable def connected_zero_forcing_number2 (G : SimpleGraph V) : ℕ :=
 def subgraph_has_isolated_vertex {G : SimpleGraph V} (S : G.Subgraph) : Prop :=
   ∃ v, S.neighborSet v = ∅
 
+-- Will refactor/generalize these two later.
+def isolate_free (G : SimpleGraph V) : Prop :=
+  ¬ (∃ v, G.neighborSet v = ∅)
+
 noncomputable def total_zero_forcing_number (G : SimpleGraph V) (C : Set V) :=
   let S : Set ℕ :=
     {n | ∃ C : Set V, (IsZeroForcingSet G C)
       ∧ (¬ subgraph_has_isolated_vertex (subgraph_from_set G C))
+      ∧ n = C.ncard}
+  sInf S
+
+/--
+From GraphCalc:
+Compute the well-splitting number S_w(G) of the graph G.
+The well-splitting number of a graph is the minimum size of a well-splitting set,
+defined as a set S of vertices such that every connected component of G-S has at most
+ceil((|V(G)| - |S|) / 2) vertices. A well-splitting set is a set of vertices whose
+removal results in a graph where every connected component has a size that is at
+most half of the remaining vertices.
+-/
+def IsWellSplittingSet (G : SimpleGraph V) (C : Set V) : Prop :=
+  let gminusc := {v | v ∉ C}
+  let gmg := G.induce gminusc
+  let bound := (gminusc.ncard) ⌈/⌉ 2 -- 'ceildiv'
+  ∀ (conn_comp : (gmg).ConnectedComponent), conn_comp.supp.ncard <= bound
+
+noncomputable def well_splitting_number (G : SimpleGraph V) (C : Set V) :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsWellSplittingSet G C)
       ∧ n = C.ncard}
   sInf S
 
