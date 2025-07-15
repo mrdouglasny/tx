@@ -30,21 +30,21 @@ https://graphcalc.readthedocs.io/en/latest/modules/invariants.html
 The ones listed with an x are still in progress.
 ================
 
-- Traditional Invariants:
+- 'Simple' Invariants: (is there a better word to describe these?)
   - chromatic_number()
   - clique_number()
-  - edge_cover_number()
   - independence_number()
   - matching_number()
   - min_maximal_matching_number()
   - vertex_cover_number()
+  - edge_cover_number()
   - average_degree()
   - degree()
   - degree_sequence()
-  - harmonic_index()
   - maximum_degree()
   - minimum_degree()
   - complement_is_connected()
+  - harmonic_index()
   - well_splitting_number()
 - Degree Sequence Based:
   x annihilation_number()
@@ -106,6 +106,7 @@ universe u
 -- DecidableEq V needed for eigenvalues
 variable {V : Type u} [Fintype V] [DecidableEq V]
 
+-- SIMPLE INVARIANTS
 /-- The **chromatic number** of a graph `G`.
 
 It is the least `n : ℕ∞` such that `G` admits an `n`‑colouring.  This is just
@@ -168,6 +169,34 @@ noncomputable def vertex_cover_number (G : SimpleGraph V) : ℕ := by
     {n | ∃ C : Set V, (IsVertexCover G C) ∧ n = C.ncard}
   exact sInf S
 
+/-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
+* every edge in `C` is indeed an edge of `G`, *and*
+* for every vertex `v`, some edge of `C` is incident to `v`.
+-/
+@[simp]
+def IsEdgeCover (G : SimpleGraph V) (C : Set (Sym2 V)) : Prop :=
+  C ⊆ G.edgeSet ∧ ∀ v : V, ∃ e : Sym2 V, (e ∈ C) ∧ v ∈ e
+
+/-- The **edge cover number** of `G`.
+
+It is defined as the infimum (in `ℕ∞`) of the cardinalities of all finite
+edge covers.  When `G` possesses no edge cover (e.g. it has an isolated
+vertex) the set we take the infimum of is empty, and the value is `⊤` by
+convention.
+
+We quantify over *finite* edge sets, hence the `[Fintype V]` requirement so
+that the ambient edge set is itself finite.
+-/
+noncomputable def edge_cover_number (G : SimpleGraph V) [Fintype V] : ℕ∞ := by
+  classical
+  -- The set of candidate sizes, expressed in `ℕ∞` for convenient `Inf`.
+  let S : Set ℕ∞ :=
+    {n | ∃ C : Finset (Sym2 V),
+        (∀ e, e ∈ C → (e : Sym2 V) ∈ G.edgeSet) ∧          -- every edge belongs to G
+        (∀ v : V, ∃ e, e ∈ C ∧ v ∈ e) ∧                    -- cover condition
+        n = (C.card : ℕ∞)}                                -- tie size to `n`
+  exact sInf S
+
 /--
 Checks if the complement of a set S in the graph G induces a connected subgraph.
 
@@ -215,6 +244,29 @@ noncomputable def maximum_degree (G : SimpleGraph V) : WithBot ℕ :=
 noncomputable def minimum_degree (G : SimpleGraph V) : WithBot ℕ :=
    ((Finset.univ : Finset V).image (λ v => G.degree v)).min
 
+/--
+From GraphCalc:
+Compute the well-splitting number S_w(G) of the graph G.
+The well-splitting number of a graph is the minimum size of a well-splitting set,
+defined as a set S of vertices such that every connected component of G-S has at most
+ceil((|V(G)| - |S|) / 2) vertices. A well-splitting set is a set of vertices whose
+removal results in a graph where every connected component has a size that is at
+most half of the remaining vertices.
+-/
+def IsWellSplittingSet (G : SimpleGraph V) (C : Set V) : Prop :=
+  let gminusc := {v | v ∉ C}
+  let gmg := G.induce gminusc
+  let bound := (gminusc.ncard) ⌈/⌉ 2 -- 'ceildiv'
+  ∀ (conn_comp : (gmg).ConnectedComponent), conn_comp.supp.ncard <= bound
+
+noncomputable def well_splitting_number (G : SimpleGraph V) (C : Set V) :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsWellSplittingSet G C)
+      ∧ n = C.ncard}
+  sInf S
+
+
+-- MATRIX INVARIANTS
 /--
 If you use this code instead
 ```
@@ -298,6 +350,8 @@ def laplacian_eigenvalues (G : SimpleGraph V) : Set ℝ :=
 noncomputable def largest_laplacian_eigenvalue (G : SimpleGraph V) :=
   sSup (laplacian_eigenvalues G)
 
+-- DOMINATION NUMBER AND FRIENDS
+
 -- dominating set: each vertex is either in the dominating set or adjacent
 -- to a vertex in the set
 def IsDominatingSet (G : SimpleGraph V) (C : Set V) : Prop :=
@@ -342,7 +396,23 @@ noncomputable def outer_connected_domination_number (G : SimpleGraph V) : ℕ :=
     {n | ∃ C : Set V, (IsOuterConnectedDominatingSet G C) ∧ n = C.ncard}
   exact sInf S
 
--- K FORCING RELATED INVARIANTS
+noncomputable def sub_k_domination_number (G : SimpleGraph V) (k : ℕ) :=
+  have degree_list := degree_sequence G
+  have n := Fintype.card V
+  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
+  -- one way to express \sum_{i = 0}^{t}
+  let all_possible_t := {t | (t + (1 / k) * ∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
+  sInf all_possible_t
+
+noncomputable def sub_total_domination_number (G : SimpleGraph V) :=
+  have degree_list := degree_sequence G
+  have n := Fintype.card V
+  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
+  -- one way to express \sum_{i = 0}^{t}
+  let all_possible_t := {t | (∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
+  sInf all_possible_t
+
+-- K FORCING AND POWER DOMINATION
 
 /-- `atMost k T` says the (finite) set `T` has ≤ `k` elements. -/
 def atMost (k : ℕ) (T : Set V) : Prop :=
@@ -439,68 +509,3 @@ noncomputable def total_zero_forcing_number (G : SimpleGraph V) (C : Set V) :=
       ∧ (¬ subgraph_has_isolated_vertex (subgraph_from_set G C))
       ∧ n = C.ncard}
   sInf S
-
-/--
-From GraphCalc:
-Compute the well-splitting number S_w(G) of the graph G.
-The well-splitting number of a graph is the minimum size of a well-splitting set,
-defined as a set S of vertices such that every connected component of G-S has at most
-ceil((|V(G)| - |S|) / 2) vertices. A well-splitting set is a set of vertices whose
-removal results in a graph where every connected component has a size that is at
-most half of the remaining vertices.
--/
-def IsWellSplittingSet (G : SimpleGraph V) (C : Set V) : Prop :=
-  let gminusc := {v | v ∉ C}
-  let gmg := G.induce gminusc
-  let bound := (gminusc.ncard) ⌈/⌉ 2 -- 'ceildiv'
-  ∀ (conn_comp : (gmg).ConnectedComponent), conn_comp.supp.ncard <= bound
-
-noncomputable def well_splitting_number (G : SimpleGraph V) (C : Set V) :=
-  let S : Set ℕ :=
-    {n | ∃ C : Set V, (IsWellSplittingSet G C)
-      ∧ n = C.ncard}
-  sInf S
-
-/-- A predicate saying that a set of edges `C` is an **edge cover** of `G`:
-* every edge in `C` is indeed an edge of `G`, *and*
-* for every vertex `v`, some edge of `C` is incident to `v`.
--/
-@[simp]
-def IsEdgeCover (G : SimpleGraph V) (C : Set (Sym2 V)) : Prop :=
-  C ⊆ G.edgeSet ∧ ∀ v : V, ∃ e : Sym2 V, (e ∈ C) ∧ v ∈ e
-
-/-- The **edge cover number** of `G`.
-
-It is defined as the infimum (in `ℕ∞`) of the cardinalities of all finite
-edge covers.  When `G` possesses no edge cover (e.g. it has an isolated
-vertex) the set we take the infimum of is empty, and the value is `⊤` by
-convention.
-
-We quantify over *finite* edge sets, hence the `[Fintype V]` requirement so
-that the ambient edge set is itself finite.
--/
-noncomputable def edge_cover_number (G : SimpleGraph V) [Fintype V] : ℕ∞ := by
-  classical
-  -- The set of candidate sizes, expressed in `ℕ∞` for convenient `Inf`.
-  let S : Set ℕ∞ :=
-    {n | ∃ C : Finset (Sym2 V),
-        (∀ e, e ∈ C → (e : Sym2 V) ∈ G.edgeSet) ∧          -- every edge belongs to G
-        (∀ v : V, ∃ e, e ∈ C ∧ v ∈ e) ∧                    -- cover condition
-        n = (C.card : ℕ∞)}                                -- tie size to `n`
-  exact sInf S
-
-noncomputable def sub_k_domination_number (G : SimpleGraph V) (k : ℕ) :=
-  have degree_list := degree_sequence G
-  have n := Fintype.card V
-  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
-  -- one way to express \sum_{i = 0}^{t}
-  let all_possible_t := {t | (t + (1 / k) * ∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
-  sInf all_possible_t
-
-noncomputable def sub_total_domination_number (G : SimpleGraph V) :=
-  have degree_list := degree_sequence G
-  have n := Fintype.card V
-  let sorted_degrees := degree_list.insertionSort (· ≥ ·)
-  -- one way to express \sum_{i = 0}^{t}
-  let all_possible_t := {t | (∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
-  sInf all_possible_t
