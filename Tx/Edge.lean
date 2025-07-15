@@ -259,7 +259,7 @@ def IsWellSplittingSet (G : SimpleGraph V) (C : Set V) : Prop :=
   let bound := (gminusc.ncard) ⌈/⌉ 2 -- 'ceildiv'
   ∀ (conn_comp : (gmg).ConnectedComponent), conn_comp.supp.ncard <= bound
 
-noncomputable def well_splitting_number (G : SimpleGraph V) (C : Set V) :=
+noncomputable def well_splitting_number (G : SimpleGraph V) :=
   let S : Set ℕ :=
     {n | ∃ C : Set V, (IsWellSplittingSet G C)
       ∧ n = C.ncard}
@@ -503,7 +503,7 @@ def subgraph_has_isolated_vertex {G : SimpleGraph V} (S : G.Subgraph) : Prop :=
 def isolate_free (G : SimpleGraph V) : Prop :=
   ¬ (∃ v, G.neighborSet v = ∅)
 
-noncomputable def total_zero_forcing_number (G : SimpleGraph V) (C : Set V) :=
+noncomputable def total_zero_forcing_number (G : SimpleGraph V) :=
   let S : Set ℕ :=
     {n | ∃ C : Set V, (IsZeroForcingSet G C)
       ∧ (¬ subgraph_has_isolated_vertex (subgraph_from_set G C))
