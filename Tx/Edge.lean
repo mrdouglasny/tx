@@ -24,22 +24,66 @@ import Mathlib.Algebra.Order.Floor.Div
 Lean 4 counterpart of a subset of the invariants provided by the
 `graphcalc` Python library.
 
-Currently covered
+Here are the invariants listed at
+https://graphcalc.readthedocs.io/en/latest/modules/invariants.html
+
+The ones listed with an x are still in progress.
 ================
 
-* `chromatic_number`  – smallest number of colours in a proper vertex colouring;
-* `clique_number`     – size of a largest clique (maximum clique size);
-* `edge_cover_number` – size *or* `⊤` of a smallest edge cover.
-* `independence_number` - size of largest independent set
-* `matching number` - NOT DONE YET
-* `vertex cover number` - size of minimum vertex cover
-* `annihilation number` - NOT DONE YET
-* `average degree` - average of vertex degrees
-* `degree` - degree of a given vertex
-* `degree sequence` - list all vertex degrees, preserving duplicates
-* `harmonic index` - sum of 2 / (deg(u) + deg(v)) over all edges {u, v}
-* `maximum degree` - max degree, duh
-* `minimum degree` - min degree, duh
+- Traditional Invariants:
+  - chromatic_number()
+  - clique_number()
+  - edge_cover_number()
+  - independence_number()
+  - matching_number()
+  - min_maximal_matching_number()
+  - vertex_cover_number()
+  - average_degree()
+  - degree()
+  - degree_sequence()
+  - harmonic_index()
+  - maximum_degree()
+  - minimum_degree()
+  - complement_is_connected()
+  - well_splitting_number()
+- Degree Sequence Based:
+  x annihilation_number()
+  x residue()
+  x slater()
+- Domination Number and Friends
+  - sub_k_domination_number()
+  - sub_total_domination_number()
+  - domination_number()
+  - independent_domination_number()
+  - outer_connected_domination_number()
+  - total_domination_number()
+- Rainbow Domination and Friends
+  x minimum_rainbow_dominating_function()
+  x three_rainbow_domination_number()
+  x two_rainbow_domination_number()
+- Roman Domination and Friends
+  x roman_domination_number()
+  x double_roman_domination_number()
+- Matrix Invariants and Friends
+  - adjacency_eigenvalues()
+  - adjacency_matrix()
+  - algebraic_connectivity()
+  - laplacian_eigenvalues()
+  - laplacian_matrix()
+  - largest_laplacian_eigenvalue()
+  - second_largest_adjacency_eigenvalue()
+  - smallest_adjacency_eigenvalue()
+  - spectral_radius()
+  - zero_adjacency_eigenvalues_count()
+- Forcing Number/Power Domination
+  - connected_zero_forcing_number()
+  - k_forcing_number()
+  - k_power_domination_number()
+  - positive_semidefinite_zero_forcing_number()
+  - power_domination_number()
+  - total_zero_forcing_number()
+  - two_forcing_number()
+  - zero_forcing_number()
 
 > ### About `edge_cover_number`
 > Mathlib&nbsp;4 does not yet package an "edge cover number" out of the box, so
