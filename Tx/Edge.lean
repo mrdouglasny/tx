@@ -330,7 +330,9 @@ notation S " ⟹[" k ", " G "] " T => kForces k G S T
 after finitely many rounds that start from the initial coloured set `C`.
 -/
 def IsKForcingSet (k : ℕ) (G : SimpleGraph V) (C : Set V) : Prop :=
-  ∃ T, (C ⟹[k, G] T) ∧ T = ⊤      -- `⊤ : Set V` is the universe `Set.univ`
+-- WH: I believe the below line can be simplified, no?
+--  ∃ T, (C ⟹[k, G] T) ∧ T = ⊤      -- `⊤ : Set V` is the universe `Set.univ`
+  (C ⟹[k, G] ⊤)
 
 /--
 'A zero forcing set is a special case of a k-forcing set where k = 1.'
@@ -355,6 +357,19 @@ noncomputable def connected_zero_forcing_number (G : SimpleGraph V) : ℕ :=
       ∧ (subgraph_from_set G C).Connected
       ∧ n = C.ncard}
   sInf S
+
+-- Power domination first includes the neighborhood, and then proceeds with k-forcing
+def IsKPowerDominatingSet (k : ℕ) (G : SimpleGraph V) (C : Set V) : Prop :=
+  let C_with_nbhd := C ∪ {v | ∃ u ∈ C, G.Adj u v}
+  C_with_nbhd ⟹[k, G] ⊤
+
+noncomputable def k_power_domination_number (k : ℕ) (G : SimpleGraph V) : ℕ :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsKPowerDominatingSet k G C) ∧ n = C.ncard}
+  sInf S
+
+noncomputable def power_domination_number (G : SimpleGraph V) : ℕ :=
+  k_power_domination_number 1 G
 
 /--
 Alternatively, we could build the set from subgraphs.
