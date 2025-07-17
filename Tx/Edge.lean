@@ -532,3 +532,34 @@ noncomputable def total_zero_forcing_number (G : SimpleGraph V) :=
       ∧ (¬ subgraph_has_isolated_vertex (subgraph_from_set G C))
       ∧ n = C.ncard}
   sInf S
+
+-- PSD zero forcing: different color change rule:
+-- split G - S into connected components
+-- color neighbors if a black vertex has at most one white neighbor in a certain
+-- connected component
+def PSDForcingStep (k : ℕ) (G : SimpleGraph V) (S : Set V) : Set V :=
+  let currWhite : Set V := {v | v ∉ S}  -- white vertices
+  let newBlack := ⋃ C : (G.induce currWhite).ConnectedComponent,
+    let CsetV : Set V := {x.1 | x ∈ C.supp} -- needed to turn currWhite back into V
+    {
+        w | ∃ v ∈ S, w ∈ CsetV
+            ∧ G.Adj v w ∧
+        -- v has exactly one white neighbor in its component
+        atMost k {z | G.Adj v z ∧ z ∈ CsetV}
+    }
+  S ∪ newBlack
+
+inductive PSDForces (k : ℕ) (G : SimpleGraph V) : Set V → Set V → Prop
+  | refl  {S} : PSDForces k G S S
+  | step  {S T} (hST : PSDForces k G S T) : PSDForces k G S (PSDForcingStep k G T)
+
+def IsPSDForcingSet (k : ℕ) (G : SimpleGraph V) (C : Set V) : Prop :=
+  PSDForces k G C ⊤
+
+noncomputable def k_psd_forcing_number (k : ℕ) (G : SimpleGraph V) : ℕ :=
+  let S : Set ℕ :=
+    {n | ∃ C : Set V, (IsPSDForcingSet k G C) ∧ n = C.ncard}
+  sInf S
+
+noncomputable def positive_semidefinite_zero_forcing_number (G : SimpleGraph V) : ℕ :=
+  k_psd_forcing_number 1 G
