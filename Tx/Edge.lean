@@ -48,20 +48,20 @@ The ones listed with an x are still in progress.
   - harmonic_index()
   - well_splitting_number()
 - Degree Sequence Based:
-  x annihilation_number()
+  - annihilation_number()
   x residue()
-  x slater()
 - Domination Number and Friends
   - sub_k_domination_number()
+  - slater() (slater is here because it is a special case of sub k domination)
   - sub_total_domination_number()
   - domination_number()
   - independent_domination_number()
   - outer_connected_domination_number()
   - total_domination_number()
 - Rainbow Domination and Friends
-  x minimum_rainbow_dominating_function()
-  x three_rainbow_domination_number()
-  x two_rainbow_domination_number()
+  - minimum_rainbow_dominating_function()
+  - three_rainbow_domination_number()
+  - two_rainbow_domination_number()
 - Roman Domination and Friends
   x roman_domination_number()
   x double_roman_domination_number()
@@ -266,6 +266,16 @@ noncomputable def well_splitting_number (G : SimpleGraph V) :=
       ∧ n = C.ncard}
   sInf S
 
+-- DEGREE SEQUENCE BASED
+
+noncomputable def annihilation_number (G : SimpleGraph V) (k : ℕ) :=
+  have degree_list := degree_sequence G
+  have m := G.edgeFinset.card
+  let sorted_degrees := degree_list.insertionSort (· ≤ ·)
+  -- one way to express \sum_{i = 0}^{t}
+  let all_possible_t := {t | (∑ i ∈ Finset.range (t), sorted_degrees[i]!) ≥ m}
+  sSup all_possible_t
+
 -- RAINBOW DOMINATION
 
 -- For a graph G, a set C is a rainbow dominating set for the coloring f:
@@ -427,6 +437,9 @@ noncomputable def sub_k_domination_number (G : SimpleGraph V) (k : ℕ) :=
   let all_possible_t := {t | (t + (1 / k) * ∑ i ∈ Finset.range (t + 1), sorted_degrees[i]!) ≥ n}
   sInf all_possible_t
 
+noncomputable def slater (G : SimpleGraph V) :=
+  sub_k_domination_number G 1
+
 noncomputable def sub_total_domination_number (G : SimpleGraph V) :=
   have degree_list := degree_sequence G
   have n := Fintype.card V
@@ -563,3 +576,12 @@ noncomputable def k_psd_forcing_number (k : ℕ) (G : SimpleGraph V) : ℕ :=
 
 noncomputable def positive_semidefinite_zero_forcing_number (G : SimpleGraph V) : ℕ :=
   k_psd_forcing_number 1 G
+
+/--
+SHIM DEFINITIONS FOR CONJECTURE USAGE
+The output of TxGraffiti2 uses slighly different names which we define as syntactic sugar here.
+This allows the output to be effectively directly exportable into Lean.
+-/
+alias max_degree := maximum_degree
+alias min_degree := minimum_degree
+def order (_ : SimpleGraph V) := Fintype.card V
