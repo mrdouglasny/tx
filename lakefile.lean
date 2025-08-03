@@ -7,10 +7,12 @@ package «tx» where
     ⟨`pp.unicode.fun, true⟩ -- pretty-prints `fun a ↦ b`
   ]
   -- add any additional package configuration options here
+require Hammer from git
+  "https://github.com/JOSHCLUNE/LeanHammer.git"@"v4.21.0"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"
+  "https://github.com/leanprover-community/mathlib4.git"@"v4.21.0"
 
 @[default_target]
-lean_lib «Tx» where
+lean_lib «TxGraffitiBench» where
   -- add any library configuration options here
