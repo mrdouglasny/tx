@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-package «tx» where
+package «TxGraffitiBench» where
   -- Settings applied to both builds and interactive editing
   leanOptions := #[
     ⟨`pp.unicode.fun, true⟩ -- pretty-prints `fun a ↦ b`
