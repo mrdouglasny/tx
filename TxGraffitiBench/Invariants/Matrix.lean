@@ -33,43 +33,47 @@ noncomputable def adjacency_matrix (G: SimpleGraph V) : Matrix V V ℕ :=
   G.adjMatrix ℕ
 
 -- I realized if this returns a Set, there is no multiplicity.
--- This will make counting zero eigenvalues difficult.
-noncomputable def adjacency_eigenvalues2 (G : SimpleGraph V) : Set ℝ :=
+-- This makes counting zero eigenvalues difficult.
+noncomputable def adjacency_eigenvalues_set (G : SimpleGraph V) : Set ℝ :=
   let real_adj_matrix : Matrix V V ℝ := (adjacency_matrix G).map (↑)
   spectrum ℝ real_adj_matrix
 
-noncomputable def adjacency_eigenvalues (G : SimpleGraph V) :=
+noncomputable def adjacency_eigenvalues_set' (G : SimpleGraph V) :=
   spectrum ℝ (G.adjMatrix ℝ)
 
-noncomputable def smallest_adjacency_eigenvalue (G : SimpleGraph V) :=
-  sInf (adjacency_eigenvalues G)
-
-noncomputable def spectral_radius (G : SimpleGraph V) :=
-  sSup ((adjacency_eigenvalues G).image abs)
-
--- Method 2: number of zero eigenvalues = dimension kernel = n - dim image
-noncomputable def zero_adjacency_eigenvalues_count' (G: SimpleGraph V) :=
-    Module.rank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
-
--- Method 3: eigenvalues returns an indexable object
-noncomputable def adjacency_eigenvalues' (G : SimpleGraph V) := by
+-- Alternatively, eigenvalues can return an indexable object
+noncomputable def adjacency_eigenvalues_ind (G : SimpleGraph V) : V → ℝ := by
   let real_adj_matrix : Matrix V V ℝ := (G.adjMatrix ℝ) -- (adjacency_matrix G).map (↑)
   have hS : Matrix.IsSymm real_adj_matrix := G.isSymm_adjMatrix
   have hA : Matrix.IsHermitian real_adj_matrix := by
     simpa [Matrix.conjTranspose,hS]
   exact hA.eigenvalues
 
+-- by default, return a set of eigenvalues
+noncomputable def adjacency_eigenvalues (G : SimpleGraph V) := adjacency_eigenvalues_set G
+
+noncomputable def smallest_adjacency_eigenvalue (G : SimpleGraph V) :=
+  sInf (adjacency_eigenvalues_set G)
+
+noncomputable def spectral_radius (G : SimpleGraph V) :=
+  sSup ((adjacency_eigenvalues_set G).image abs)
+
+-- To count the zero eigenvales:
+-- number of zero eigenvalues = dimension kernel = n - dim image
 noncomputable def zero_adjacency_eigenvalues_count (G : SimpleGraph V) :=
   Module.finrank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
 
+noncomputable def zero_adjacency_eigenvalues_count' (G: SimpleGraph V) :=
+    Module.rank ℝ (LinearMap.ker (Matrix.toLin' (G.adjMatrix ℝ)))
+
 noncomputable def algebraic_connectivity (G : SimpleGraph V) : Option ℝ :=
-  let eigval_func := adjacency_eigenvalues' G
+  let eigval_func := adjacency_eigenvalues_ind G
   let image := Finset.image eigval_func Finset.univ
   let sorted := image.sort (· ≤ ·)
   sorted[1]?
 
 noncomputable def second_largest_adjacency_eigenvalue (G : SimpleGraph V) : Option ℝ :=
-  let eigval_func := adjacency_eigenvalues' G
+  let eigval_func := adjacency_eigenvalues_ind G
   let image := Finset.image eigval_func Finset.univ
   let sorted := image.sort (· ≥ ·)
   sorted[1]?
