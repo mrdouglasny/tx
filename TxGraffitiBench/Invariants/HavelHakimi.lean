@@ -26,7 +26,7 @@ def havel_hakimi_step (ds : List Nat) : List Nat :=
         let newRest := (takeD.map (· - 1)) ++ dropD
         newRest
 
-#eval havel_hakimi_step [1, 1, 1, 1, 1, 1, 1, 1]
+-- #eval havel_hakimi_step [1, 1, 1, 1, 1, 1, 1, 1]
 
 /--
 The full Havel-Hakimi algorithm
