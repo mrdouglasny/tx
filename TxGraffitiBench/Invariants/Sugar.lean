@@ -1,5 +1,6 @@
 import TxGraffitiBench.Invariants.Basic
 import Mathlib.Combinatorics.SimpleGraph.Bipartite
+import Mathlib.Combinatorics.SimpleGraph.Acyclic
 
 universe u
 
@@ -15,3 +16,13 @@ alias min_degree := minimum_degree
 def order (_ : SimpleGraph V) := Fintype.card V
 def connected (G : SimpleGraph V) := G.Connected
 def bipartite (G : SimpleGraph V) := G.IsBipartite
+
+def tree (G : SimpleGraph V) := G.IsTree
+def triangle_free (G : SimpleGraph V) := G.CliqueFree 3
+
+def has_claw (G : SimpleGraph V) :=
+  ∃ (a b c d : V), G.Adj a b ∧ G.Adj a c ∧ G.Adj a d
+  ∧ (¬G.Adj b c) ∧ (¬G.Adj b d) ∧ (¬G.Adj c d)
+
+def claw_free (G : SimpleGraph V) :=
+  ¬ has_claw G
