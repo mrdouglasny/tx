@@ -191,3 +191,8 @@ def subgraph_from_set (G : SimpleGraph V) (C : Set V) : G.Subgraph :=
       rintro v w ⟨hvw, hv, hw⟩
       exact ⟨G.symm hvw, hw, hv⟩
   }
+
+noncomputable def harmonic_index (G : SimpleGraph V) : ℝ :=
+  ∑ e ∈ G.edgeFinset,
+    let ⟨u, v⟩ := e.out
+    2 / ((G.degree u) + (G.degree v))
