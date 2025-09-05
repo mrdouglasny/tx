@@ -9,7 +9,7 @@ import Mathlib.Combinatorics.SimpleGraph.Coloring
 import Mathlib.Combinatorics.SimpleGraph.Matching
 
 import Mathlib.Data.Nat.Basic
-import Mathlib.Data.Rat.Init
+import Mathlib.Data.Rat.Defs
 import Mathlib.Algebra.Order.Floor.Div -- needed for ceiling division
 
 open SimpleGraph
@@ -192,7 +192,7 @@ def subgraph_from_set (G : SimpleGraph V) (C : Set V) : G.Subgraph :=
       exact ⟨G.symm hvw, hw, hv⟩
   }
 
-noncomputable def harmonic_index (G : SimpleGraph V) : ℝ :=
+noncomputable def harmonic_index (G : SimpleGraph V) : ℚ :=
   ∑ e ∈ G.edgeFinset,
     let ⟨u, v⟩ := e.out
     2 / ((G.degree u) + (G.degree v))
