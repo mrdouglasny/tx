@@ -11,6 +11,7 @@ import Mathlib.Combinatorics.SimpleGraph.Matching
 import Mathlib.Data.Nat.Basic
 import Mathlib.Data.Rat.Defs
 import Mathlib.Algebra.Order.Floor.Div -- needed for ceiling division
+import Mathlib.Data.Finset.Empty
 
 open SimpleGraph
 open Classical
@@ -152,12 +153,31 @@ noncomputable def degree_sequence (G : SimpleGraph V) : List ℕ :=
 Finset.max returns WithBot ℕ (just the naturals with a ⊥ element) to
 account for empty lists. However, I think the graph on no vertices
 will have an empty degree list.
--/
-noncomputable def maximum_degree (G : SimpleGraph V) : WithBot ℕ :=
-   ((Finset.univ : Finset V).image (λ v => G.degree v)).max
 
-noncomputable def minimum_degree (G : SimpleGraph V) : WithBot ℕ :=
-   ((Finset.univ : Finset V).image (λ v => G.degree v)).min
+Thus, we use max' and min' which always return a ℕ but require a proof
+of nonemptiness.
+-/
+noncomputable def maximum_degree
+                  [h_nev : Nonempty V]
+                  (G : SimpleGraph V) : ℕ :=
+  let V_finset : Finset V := (Finset.univ : Finset V)
+  have V_finset_ne : V_finset.Nonempty :=
+    Finset.univ_nonempty_iff.mpr h_nev
+  let deg_imgs := V_finset.image (λ v => G.degree v)
+  have deg_imgs_ne : deg_imgs.Nonempty :=
+    Finset.Nonempty.image V_finset_ne (λ v => G.degree v)
+  deg_imgs.max' deg_imgs_ne
+
+noncomputable def minimum_degree
+                  [h_nev : Nonempty V]
+                  (G : SimpleGraph V) : ℕ :=
+  let V_finset : Finset V := (Finset.univ : Finset V)
+  have V_finset_ne : V_finset.Nonempty :=
+    Finset.univ_nonempty_iff.mpr h_nev
+  let deg_imgs := V_finset.image (λ v => G.degree v)
+  have deg_imgs_ne : deg_imgs.Nonempty :=
+    Finset.Nonempty.image V_finset_ne (λ v => G.degree v)
+  deg_imgs.min' deg_imgs_ne
 
 /--
 From GraphCalc:
