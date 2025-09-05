@@ -32,8 +32,8 @@ API.
 If you need a plain `ℕ`, recover it with `ENat.toNat` provided the value is
 finite (`≠ ⊤`).
 -/
-noncomputable def chromatic_number (G : SimpleGraph V) : ℕ∞ :=
-  G.chromaticNumber
+noncomputable def chromatic_number (G : SimpleGraph V) : ℕ :=
+  G.chromaticNumber.toNat
 
 /-- The **clique number** of `G` – the size of a largest clique.
 
